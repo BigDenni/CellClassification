@@ -43,7 +43,21 @@ def mynet(x, xsize):
     h_conv4 = conv2d(h_resi4, W_conv4) + b_conv4
     
     return h_conv4
+    
+def mynet2(x, xsize):
 
+    W_conv1 = weight_variable([3, 3, 3, 16])
+    b_conv1 = bias_variable([16])
+    h_conv1 = conv2d(x, W_conv1) + b_conv1
+    h_pool1 = tf.nn.relu(max_pool_2x2(h_conv1))
+    
+    h_resi2 = tf.image.resize_bilinear(h_pool1, xsize+2)
+    W_conv2 = weight_variable([3, 3, 16, 1])
+    b_conv2 = bias_variable([1])
+    h_conv2 = conv2d(h_resi2, W_conv2) + b_conv2
+    
+    return h_conv2
+    
 
 '''
 W_conv1 = weight_variable([3, 3, 3, 16])
