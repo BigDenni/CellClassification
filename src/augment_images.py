@@ -69,6 +69,7 @@ def augment_data_sets(traindata, labeldata):
         gy = rd.random()*img.shape[0]
         newimg = elastic_transform2(img,gx,gy,s)
         labelimg = elastic_transform2(labelimg,gx,gy,s)
+        #newimg = img
         
         angle = rd.randint(0,3)*90
         newimg = ndimage.rotate(newimg,angle)

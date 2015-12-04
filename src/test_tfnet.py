@@ -9,22 +9,26 @@ import os
 import tensorflow as tf
 import numpy as np
 import matplotlib.image as mpimg
-from network import mynet2
+import network as net
 from read_detection_data import read_data_sets_testing
 from preprocess import preprocess
+from validate_detection import validate_detection
                         
 
 projdir = '/home/dennis/CellClassification/'
-modelname = 'Little'
+modelname = 'wayback'
 modelfolder = projdir + 'nets/' + modelname + '/'
 datadir = projdir+'data/'
+resultsdir = projdir + 'testresults/' + modelname + '/'
 test_dir = datadir+'working_folder/testing'
+
+if not os.path.exists(resultsdir):
+    os.mkdir(resultsdir)
 
 x = tf.placeholder("float", shape=[None, None, None, 3])
 y_ = tf.placeholder("float", shape=[None, None, None, 1])
 xsize = tf.placeholder(tf.int32, shape=[2])
-y_conv = mynet2(x,xsize)
-#train_step = tf.train.AdamOptimizer(1e-4).minimize(eucl_loss)
+y_conv = net.network(x,xsize,modelname)
 
 sess = tf.Session()
 
@@ -41,11 +45,5 @@ for j in range(testdata.shape[0]):
     print j
     testimage = testdata[j]
     res = sess.run([y_conv], feed_dict={x: testdata[j:j+1], xsize: [testdata.shape[1],testdata.shape[2]]})
-    image = res[0]
-    image = image[0,:,:,0]
-    image_t = (image > 20) * 1
-    
-    mpimg.imsave(datadir+'testresults/'+str(j)+'_outfile.jpg', image)
-    mpimg.imsave(datadir+'testresults/'+str(j)+'_outans.jpg', image)
-    mpimg.imsave(datadir+'testresults/'+str(j)+'_original.jpg', det_data.testdata[j,:,:,:])
+    validate_detection(res[0], det_data.testdata[j,:,:,:], j, resultsdir)
     
