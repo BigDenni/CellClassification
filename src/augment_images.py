@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
 from scipy import ndimage
-
+'''
 def augment_data_sets2(train_dir, label_dir, augment_folder):
     
     import os
@@ -49,7 +49,7 @@ def augment_data_sets2(train_dir, label_dir, augment_folder):
             plt.imsave(augment_folder+'/'+filename+str(i)+'.jpg', newimg)
             plt.imsave(augment_folder+'/'+filename+str(i)+'_label.jpg', labelimg, cmap = cm.gray)
         plt.imsave(augment_folder+'/'+filename+'_original.jpg', img)
-        
+'''     
 def augment_data_sets(traindata, labeldata):
     
     
@@ -85,7 +85,7 @@ def augment_data_sets(traindata, labeldata):
         auglabel[i,:,:,:] = labelimg[:,:,np.newaxis]
         
     return augtrain, auglabel
-    
+'''  
 train_dir = '/home/dennis/CellClassification/data/working_folder/training'
 label_dir = '/home/dennis/CellClassification/data/working_folder/labels'
 augment_folder = '/home/dennis/CellClassification/data/working_folder/augment'
@@ -94,3 +94,4 @@ augment_folder = '/home/dennis/CellClassification/data/working_folder/augment'
 #augment_folder = 'F:\\LinuxMintDocuments\\Cell_Detection_Classification\\data\\working_folder\\augment'
 
 augment_data_sets2(train_dir, label_dir, augment_folder)
+'''

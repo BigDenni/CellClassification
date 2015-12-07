@@ -10,7 +10,7 @@ import scipy.ndimage
 import matplotlib.pyplot as plt
 
 def validate_detection(image, original, index, resultsdir, patchflag=False, patchsize=100):
-    import skimage.morphology
+    #import skimage.morphology
     import os
     #import skimage.measure
     
@@ -70,3 +70,7 @@ def validate_detection(image, original, index, resultsdir, patchflag=False, patc
     #plt.imsave(resultsdir+str(index)+'_nonmax.jpg', imagenm)
     #plt.imsave(resultsdir+str(index)+'_outfile.jpg', image)
     #plt.imsave(resultsdir+str(index)+'_original.jpg', original)
+    
+### TODO
+def validate_classification():
+    return 0

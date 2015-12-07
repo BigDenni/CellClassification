@@ -7,5 +7,5 @@ Created on Mon Dec  7 15:32:31 2015
 
 import tfnet
 
-#tfnet.train_tfnet('/home/dennis/CellClassification/', 'wayback', 'default', 'working_folder', False)
-tfnet.test_tfnet('/home/dennis/CellClassification/', 'wayback', 'default', 'working_folder', True, 100)
+#tfnet.train_tfnet('detection', '/home/dennis/CellClassification/', 'wayback', 'default', 'working_folder', False)
+tfnet.test_tfnet('detection', '/home/dennis/CellClassification/', 'wayback', 'default', 'working_folder', True, 100)
