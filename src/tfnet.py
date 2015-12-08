@@ -26,11 +26,10 @@ import tensorflow as tf
 import numpy as np
 
 from network import network
-from read_detection_data import read_data_sets
-from read_detection_data import read_data_sets_testing
 from preprocess import preprocess
-from augment_images import augment_data_sets
-from validate_detection import validate_detection
+
+from detection import Detection
+from classification import Classification
                         
 def get_batch(data, labels, index, size):
     indices = range(1,data.shape[0],size)
@@ -39,16 +38,14 @@ def get_batch(data, labels, index, size):
         return data[indices[index]:], labels[indices[index]:]
     return data[indices[index]:indices[index+1]], labels[indices[index]:indices[index+1]]
     
-def detection_loss(y_conv):
-    y_ = tf.placeholder("float", shape=[None, None, None, 1])
-    diff = tf.sub(y_,y_conv)
-    loss = tf.reduce_sum(tf.mul(diff,diff))
-    return y_, loss
-    
-def classification_loss(y_conv):
-    y_ = tf.placeholder("float", shape=[None, None])
-    loss = -tf.reduce_sum(y_*tf.log(y_conv))
-    return y_, loss
+def get_task(taskname):
+    if taskname == 'detection':
+        return Detection()
+    elif taskname == 'classification':
+        return Classification()
+    else:
+        print 'Task "' + taskname + '" not supported.'
+        return
 
 def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxouter=1000, maxinner=15, batchsize=50, step=1e-3):
     
@@ -70,12 +67,8 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxo
     xsize = tf.placeholder(tf.int32, shape=[2])
     y_conv = network(x,xsize,modelname)
 
-    if task == 'detection':
-        y_, loss = detection_loss(y_conv)
-    elif task == 'classification':
-        y_, loss = classification_loss(y_conv)
-    else:
-        print 'Task "' + task + '" not supported.'
+    taskobj = get_task(task)
+    y_, loss = taskobj.loss(y_conv)
 
     train_step = tf.train.AdamOptimizer(step).minimize(loss)
     #correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
@@ -88,15 +81,14 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxo
         saver.restore(sess, tf.train.latest_checkpoint(sessiondir))
     
     ######### READ DATA
-    det_data = read_data_sets(train_dir, label_dir) ###################################
+    det_data = taskobj.read_training_sets(train_dir, label_dir)
     traindata = preprocess(det_data.traindata)
     valdata = preprocess(det_data.valdata)
     numtrain = traindata.shape[0]
     numval = valdata.shape[0]
     #valdata = det_data.valdata
-    if task == 'detection':
-        trainlabels = det_data.trainlabels * 100 #######################################
-        vallabels = det_data.vallabels * 100 ##########################################
+    trainlabels = det_data.trainlabels
+    vallabels = det_data.vallabels
     
     # TRAINING
     for outer in range(maxouter):
@@ -108,14 +100,14 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxo
             for j in range(numval/10):     #image = mnist.test.images[i]
                 res = sess.run([loss, y_conv], feed_dict={x: valdata[j:j+1], y_: vallabels[j:j+1], xsize: [valdata.shape[1],valdata.shape[2]]})  
                 results.append(res[0])
-                validate_detection(res[1], det_data.valdata[j,:,:,:], j, resultsdir) ######################################
+                taskobj.validate(res[1], det_data.valdata[j,:,:,:], j, resultsdir)
             print outer, np.mean(results)    
         
         ######### Training
         
         ######### AUGMENT IMAGES
         print 'Augmenting...'
-        augtrain, auglabel = augment_data_sets(traindata, trainlabels) ################################
+        augtrain, auglabel = taskobj.augment_images(traindata, trainlabels)
         #augtrain, auglabel = (traindata, trainlabels)
         
         print 'Training...'
@@ -153,6 +145,8 @@ def test_tfnet(task, projdir, modelname, sessionname, dataset, patchflag=False, 
     xsize = tf.placeholder(tf.int32, shape=[2])
     y_conv = network(x,xsize,modelname)
     
+    taskobj = get_task(task)    
+    
     sess = tf.Session()
     
     saver = tf.train.Saver()
@@ -162,11 +156,11 @@ def test_tfnet(task, projdir, modelname, sessionname, dataset, patchflag=False, 
         print 'Model not pretrained'
     
     # DATA INIT
-    det_data = read_data_sets_testing(test_dir) ###########################################
+    det_data = taskobj.read_testing_sets(test_dir)
     testdata = preprocess(det_data.testdata)
     
     # TESTING
     for j in range(testdata.shape[0]):
         print j
         res = sess.run([y_conv], feed_dict={x: testdata[j:j+1], xsize: [testdata.shape[1],testdata.shape[2]]})
-        validate_detection(res[0], det_data.testdata[j,:,:,:], j, resultsdir, patchflag, patchsize) ##############################
+        taskobj.validate(res[0], det_data.testdata[j,:,:,:], j, resultsdir, patchflag, patchsize)
