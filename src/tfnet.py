@@ -16,7 +16,7 @@ This is a temporary script file.
 
 
 '''
-NEXT: ADD CLASSIFICATION
+NEXT: ADD DETECTION+CLASSIFICATION
 GET BETTER DATA
 '''
 
@@ -47,7 +47,7 @@ def get_task(taskname):
         print 'Task "' + taskname + '" not supported.'
         return
 
-def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxouter=1000, maxinner=15, batchsize=50, step=1e-3):
+def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, taskargs, maxouter=1000, maxinner=15, batchsize=50, step=1e-4):
     
     # FOLDER VARIABLES
     sessiondir = projdir + 'nets/' + modelname + '_' + sessionname + '/'
@@ -65,14 +65,12 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxo
     # NETWORK INIT
     x = tf.placeholder("float", shape=[None, None, None, 3])    
     xsize = tf.placeholder(tf.int32, shape=[2])
-    y_conv = network(x,xsize,modelname)
+    y_conv = network(x,xsize,modelname, taskargs)
 
     taskobj = get_task(task)
     y_, loss = taskobj.loss(y_conv)
 
     train_step = tf.train.AdamOptimizer(step).minimize(loss)
-    #correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
-    #accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
     sess.run(tf.initialize_all_variables())
     
     # SAVER
@@ -81,7 +79,7 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxo
         saver.restore(sess, tf.train.latest_checkpoint(sessiondir))
     
     ######### READ DATA
-    det_data = taskobj.read_training_sets(train_dir, label_dir)
+    det_data = taskobj.read_training_sets(train_dir, label_dir, taskargs)
     traindata = preprocess(det_data.traindata)
     valdata = preprocess(det_data.valdata)
     numtrain = traindata.shape[0]
@@ -94,13 +92,16 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxo
     for outer in range(maxouter):
         #print 'outer', outer      
     
+        print 'Validating...'
         ######## VISUALISATION AND VALIDATION
         if outer%1== 0 and outer > -1:
-            results = []  
-            for j in range(numval/10):     #image = mnist.test.images[i]
+            results = []
+            outs = []
+            for j in range(numval):     #image = mnist.test.images[i]
                 res = sess.run([loss, y_conv], feed_dict={x: valdata[j:j+1], y_: vallabels[j:j+1], xsize: [valdata.shape[1],valdata.shape[2]]})  
                 results.append(res[0])
-                taskobj.validate(res[1], det_data.valdata[j,:,:,:], j, resultsdir)
+                outs.append(res[1])
+            taskobj.validate(outs, det_data.valdata, det_data.vallabels, resultsdir, taskargs)
             print outer, np.mean(results)    
         
         ######### Training
@@ -129,7 +130,7 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, maxo
     
     sess.close()
     
-def test_tfnet(task, projdir, modelname, sessionname, dataset, patchflag=False, patchsize=100):
+def test_tfnet(task, projdir, modelname, sessionname, dataset, taskargs, patchflag=False, patchsize=100):
 
     # FOLDER VARIABLES
     sessiondir = projdir + 'nets/' + modelname + '_' + sessionname + '/'
@@ -143,7 +144,7 @@ def test_tfnet(task, projdir, modelname, sessionname, dataset, patchflag=False, 
     # NETWORK INIT
     x = tf.placeholder("float", shape=[None, None, None, 3])
     xsize = tf.placeholder(tf.int32, shape=[2])
-    y_conv = network(x,xsize,modelname)
+    y_conv = network(x,xsize,modelname, taskargs)
     
     taskobj = get_task(task)    
     
@@ -160,7 +161,9 @@ def test_tfnet(task, projdir, modelname, sessionname, dataset, patchflag=False, 
     testdata = preprocess(det_data.testdata)
     
     # TESTING
+    outs = []
     for j in range(testdata.shape[0]):
         print j
         res = sess.run([y_conv], feed_dict={x: testdata[j:j+1], xsize: [testdata.shape[1],testdata.shape[2]]})
-        taskobj.validate(res[0], det_data.testdata[j,:,:,:], j, resultsdir, patchflag, patchsize)
+        outs.append(res[0])
+    taskobj.validate(outs, det_data.testdata, None, resultsdir, taskargs)
