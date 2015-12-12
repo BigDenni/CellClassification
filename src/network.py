@@ -87,12 +87,14 @@ def deepy(x, xsize):
     conv5 = conv(resi, 32, 1, 3, 'VALID')
     return conv5
     
-def wayback(x, xsize):
+def wayback(x):
     conv1 = convpoolrelu(x, 3, 16, 3, 'VALID')
     conv2 = convpoolrelu(conv1, 16, 32, 3, 'VALID')
-    up1 = tf.image.resize_bilinear(conv2, xsize/2-4)
+    #up1 = tf.image.resize_bilinear(conv2, xsize/2-4)
+    up1 = tf.image.resize_bilinear(conv2, tf.shape(x)[1:3]/2)
     conv3 = convrelu(up1, 32, 16, 3, 'SAME')
-    up2 = tf.image.resize_bilinear(conv3, xsize)
+    #up2 = tf.image.resize_bilinear(conv3, xsize)
+    up2 = tf.image.resize_bilinear(conv3, tf.shape(x)[1:3])
     conv4 = convrelu(up2, 16, 1, 3, 'SAME')
     return conv4
 
@@ -106,7 +108,7 @@ def classy(x, taskargs):
     softm = tf.nn.softmax(resh)
     return softm
     
-def network(x, xsize, netname, taskargs):
+def network(x, netname, taskargs):
     '''
     dic = {
         'shorty': shorty(x, xsize),
@@ -120,7 +122,7 @@ def network(x, xsize, netname, taskargs):
         print 'Not valid netname'   
     '''
     if netname == 'wayback':
-        return shorty(x, xsize)
+        return wayback(x)
     elif netname == 'classy':
         return classy(x, taskargs)
     else:

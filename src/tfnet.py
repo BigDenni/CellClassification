@@ -16,7 +16,7 @@ This is a temporary script file.
 
 
 '''
-NEXT: ADD DETECTION+CLASSIFICATION
+NEXT: RETAIN ORIGINAL FILE NAMES IN DETECT_CLASS
 GET BETTER DATA
 '''
 
@@ -47,7 +47,7 @@ def get_task(taskname):
         print 'Task "' + taskname + '" not supported.'
         return
 
-def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, taskargs, maxouter=1000, maxinner=15, batchsize=50, step=1e-4):
+def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, taskargs, maxouter=1000, maxinner=15, batchsize=50, step=2e-4):
     
     # FOLDER VARIABLES
     sessiondir = projdir + 'nets/' + modelname + '_' + sessionname + '/'
@@ -64,8 +64,8 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, task
     
     # NETWORK INIT
     x = tf.placeholder("float", shape=[None, None, None, 3])    
-    xsize = tf.placeholder(tf.int32, shape=[2])
-    y_conv = network(x,xsize,modelname, taskargs)
+    #xsize = tf.placeholder(tf.int32, shape=[2])
+    y_conv = network(x, modelname, taskargs)
 
     taskobj = get_task(task)
     y_, loss = taskobj.loss(y_conv)
@@ -80,8 +80,14 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, task
     
     ######### READ DATA
     det_data = taskobj.read_training_sets(train_dir, label_dir, taskargs)
+    #print np.mean(det_data.traindata[:,:,:,1])
+    #print np.std(det_data.traindata[:,:,:,1])
     traindata = preprocess(det_data.traindata)
     valdata = preprocess(det_data.valdata)
+    print np.mean(traindata[:,:,:,2])
+    print np.std(traindata[:,:,:,2])
+    #1/0
+    
     numtrain = traindata.shape[0]
     numval = valdata.shape[0]
     #valdata = det_data.valdata
@@ -92,13 +98,14 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, task
     for outer in range(maxouter):
         #print 'outer', outer      
     
-        print 'Validating...'
+        
         ######## VISUALISATION AND VALIDATION
         if outer%1== 0 and outer > -1:
+            print 'Validating...'
             results = []
             outs = []
             for j in range(numval):     #image = mnist.test.images[i]
-                res = sess.run([loss, y_conv], feed_dict={x: valdata[j:j+1], y_: vallabels[j:j+1], xsize: [valdata.shape[1],valdata.shape[2]]})  
+                res = sess.run([loss, y_conv], feed_dict={x: valdata[j:j+1], y_: vallabels[j:j+1]})  
                 results.append(res[0])
                 outs.append(res[1])
             taskobj.validate(outs, det_data.valdata, det_data.vallabels, resultsdir, taskargs)
@@ -124,7 +131,7 @@ def train_tfnet(task, projdir, modelname, sessionname, dataset, pretrained, task
             ######## TRAINING
             for batchindex in range(numtrain/batchsize):
                 trainbatch, labelsbatch = get_batch(train, labels, batchindex, batchsize)
-                sess.run(train_step,feed_dict={x: trainbatch, y_: labelsbatch, xsize: [train.shape[1],train.shape[2]]})
+                sess.run(train_step,feed_dict={x: trainbatch, y_: labelsbatch})
                 
         saver.save(sess, sessiondir+'model.ckpt', global_step=outer)
     
@@ -143,8 +150,8 @@ def test_tfnet(task, projdir, modelname, sessionname, dataset, taskargs, patchfl
     
     # NETWORK INIT
     x = tf.placeholder("float", shape=[None, None, None, 3])
-    xsize = tf.placeholder(tf.int32, shape=[2])
-    y_conv = network(x,xsize,modelname, taskargs)
+    #xsize = tf.placeholder(tf.int32, shape=[2])
+    y_conv = network(x,modelname, taskargs)
     
     taskobj = get_task(task)    
     
@@ -164,6 +171,6 @@ def test_tfnet(task, projdir, modelname, sessionname, dataset, taskargs, patchfl
     outs = []
     for j in range(testdata.shape[0]):
         print j
-        res = sess.run([y_conv], feed_dict={x: testdata[j:j+1], xsize: [testdata.shape[1],testdata.shape[2]]})
+        res = sess.run([y_conv], feed_dict={x: testdata[j:j+1]})
         outs.append(res[0])
     taskobj.validate(outs, det_data.testdata, None, resultsdir, taskargs)

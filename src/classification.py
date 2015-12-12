@@ -27,6 +27,7 @@ class Classification(Task):
             gx = rd.random()*img.shape[1]
             gy = rd.random()*img.shape[0]
             newimg = elastic_transform2(img,gx,gy,s)
+            #newimg = img
             
             angle = rd.randint(0,3)*90
             newimg = ndimage.rotate(newimg,angle)
@@ -103,9 +104,10 @@ class Classification(Task):
         
         return det_data
     
-    def validate(self, outs, _, labels, resultsdir, taskargs):
+    def validate(self, outs, oridata, labels, resultsdir, taskargs):
         from sklearn.metrics import confusion_matrix
         import numpy as np
+        import matplotlib.pyplot as plt
         
         labelsi = np.argmax(labels, 1)
         #print 'check', labelsi.shape
@@ -117,6 +119,8 @@ class Classification(Task):
         print 'total', np.trace(conf)/float(np.sum(conf))
         for i in range(taskargs['nouts']):
             print 'class ' + str(i) + ' sens', conf[i,i]/float(np.sum(conf[i,:])), 'class ' + str(i) + ' ppv', conf[i,i]/float(np.sum(conf[:,i]))
+        for i in range(oridata.shape[0]):
+            plt.imsave(resultsdir+str(i)+'_'+str(labelsi[i])+'_'+str(outsi[i])+'segmentation.jpg', oridata[i])
     
     def loss(self, y_conv):
         y_ = tf.placeholder("float", shape=[None, None])
