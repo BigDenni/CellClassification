@@ -72,7 +72,7 @@ def detect_class(projdir, detmodel, classmodel, sessionname, dataset, detargs, c
     #clsobj = Classification()
     
     # Read test data
-    det_data = detobj.read_testing_sets(test_dir)
+    det_data, filenames = detobj.read_testing_sets(test_dir)
     testdata = preprocess(det_data.testdata)
     
     #init classifications structure
@@ -95,7 +95,7 @@ def detect_class(projdir, detmodel, classmodel, sessionname, dataset, detargs, c
         #ax = fig.add_subplot(111)
         #ax.imshow(image, aspect='normal')
         #fig.savefig(resultsdir+str(j)+'_detout.jpg')
-        plt.imsave(resultsdir+str(j)+'_detout.jpg', image)
+        plt.imsave(resultsdir+filenames[j]+'_detout.jpg', image)
         #plt.clf()
         # put detections on image
         nmy, nmx = detection.nonmaxsuppresion(image)
@@ -138,7 +138,7 @@ def detect_class(projdir, detmodel, classmodel, sessionname, dataset, detargs, c
             cly, clx = classifications[i]
             ax.scatter(clx, cly, c=colors[i], s=20, marker='+')
             print len(cly)
-        fig.savefig(resultsdir+str(j)+'_detclassifications.jpg')
+        fig.savefig(resultsdir+filenames[j]+'_detclassifications.jpg')
         plt.clf()
         #ax.clear()
         plt.close('all')

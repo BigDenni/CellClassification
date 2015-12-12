@@ -103,16 +103,20 @@ class Detection(Task):
         
         det_data = self.dataset
         testdata = []
+        counter = 0
+        filenames = {}
         
         for filename in os.listdir(test_dir):
             impath = os.path.join(test_dir, filename)
             #img = mpimg.imread(impath)
             img = skimage.io.imread(impath, plugin='tifffile')
             testdata.append(img)
+            filenames[counter] = filename
+            counter = counter + 1
     
         det_data.testdata = np.array(testdata)
         
-        return det_data
+        return det_data, filenames
         
     def validate(self, outs, oridata, _, resultsdir, taskargs):
         patchflag = taskargs['patchflag']

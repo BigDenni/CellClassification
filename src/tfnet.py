@@ -16,7 +16,7 @@ This is a temporary script file.
 
 
 '''
-NEXT: RETAIN ORIGINAL FILE NAMES IN DETECT_CLASS
+NEXT: DROPOUT
 GET BETTER DATA
 '''
 
@@ -164,7 +164,7 @@ def test_tfnet(task, projdir, modelname, sessionname, dataset, taskargs, patchfl
         print 'Model not pretrained'
     
     # DATA INIT
-    det_data = taskobj.read_testing_sets(test_dir)
+    det_data, filenames = taskobj.read_testing_sets(test_dir)
     testdata = preprocess(det_data.testdata)
     
     # TESTING
