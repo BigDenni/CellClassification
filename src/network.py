@@ -103,7 +103,8 @@ def classy(x, taskargs):
     conv2 = convpoolrelu(conv1, 16, 32, 3, 'VALID')
     conv3 = convpoolrelu(conv2, 32, 32, 3, 'VALID')
     conv4 = convpoolrelu(conv3, 32, 48, 3, 'VALID')
-    conv5 = convrelu(conv4, 48, taskargs['nouts'], 5, 'VALID')
+    conv4drop = tf.nn.dropout(conv4, 0.5)
+    conv5 = convrelu(conv4drop, 48, taskargs['nouts'], 5, 'VALID')
     resh = tf.reshape(conv5, [-1, taskargs['nouts']])
     softm = tf.nn.softmax(resh)
     return softm

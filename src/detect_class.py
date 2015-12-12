@@ -18,14 +18,14 @@ import detection
 import matplotlib.pyplot as plt
 import scipy
 
-def detect_class(projdir, detmodel, classmodel, sessionname, dataset, detargs, classargs):
+def detect_class(projdir, detmodel, classmodel, detsession, clssession, dataset, detargs, classargs):
     
     ##### Only testing needed
     
     # FOLDER VARIABLES
-    detsessiondir = projdir + 'nets/' + detmodel + '_' + sessionname + '/'
-    clssessiondir = projdir + 'nets/' + classmodel + '_' + sessionname + '/'
-    resultsdir = projdir + 'testresults/' + detmodel + '_' + classmodel +  '_' + sessionname + '/'
+    detsessiondir = projdir + 'nets/' + detmodel + '_' + detsession + '/'
+    clssessiondir = projdir + 'nets/' + classmodel + '_' + clssession + '/'
+    resultsdir = projdir + 'testresults/' + detmodel + '_' + classmodel +  '_' + clssession + '/'
     datadir = projdir + 'data/' + dataset
     test_dir = datadir+'/testing'
     
